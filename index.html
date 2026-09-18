@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>העוזר האישי שלי</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<style>
+:root{--bg-primary:#0f172a;--bg-secondary:#1e293b;--bg-glass:rgba(30,41,59,0.7);--text-primary:#f8fafc;--text-secondary:#94a3b8;--accent:#3b82f6;--accent-glow:rgba(59,130,246,0.4)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Rubik',sans-serif}
+body{background:radial-gradient(circle at 50% 0%,#1e293b 0%,#0f172a 70%);color:var(--text-primary);height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:14px 20px;background:var(--bg-glass);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;z-index:10}
+.header h1{font-size:1.15rem;font-weight:500;display:flex;align-items:center;gap:8px}
+.header h1 i{color:var(--accent)}
+.header-actions button{background:none;border:none;color:var(--text-secondary);font-size:1.15rem;cursor:pointer;margin-right:14px;transition:0.3s}
+.header-actions button:hover{color:var(--accent);transform:scale(1.15)}
+.chat-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.chat-container::-webkit-scrollbar{width:6px}
+.chat-container::-webkit-scrollbar-thumb{background:var(--bg-secondary);border-radius:10px}
+.message{max-width:85%;padding:12px 16px;border-radius:18px;line-height:1.6;animation:fadeIn .4s ease-out;word-wrap:break-word}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.user-msg{align-self:flex-end;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border-bottom-left-radius:4px}
+.ai-msg{align-self:flex-start;background:var(--bg-secondary);border:1px solid rgba(255,255,255,0.06);border-bottom-right-radius:4px}
+.ai-msg p{margin:0 0 8px}.ai-msg p:last-child{margin:0}
+.ai-msg pre{background:#0b1220;padding:10px;border-radius:10px;overflow:auto;direction:ltr;text-align:left;margin:8px 0}
+.ai-msg code{background:#0b1220;padding:2px 6px;border-radius:6px;direction:ltr}
+.ai-msg ul,.ai-msg ol{padding-right:20px;margin:6px 0}
+.ai-msg img{max-width:100%;border-radius:12px;margin-top:8px}
+.msg-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.msg-files span{background:rgba(255,255,255,0.12);padding:4px 10px;border-radius:12px;font-size:.8rem}
+.typing-indicator{display:flex;gap:5px;padding:14px 18px;align-self:flex-start;background:var(--bg-secondary);border-radius:18px}
+.typing-indicator span{width:8px;height:8px;background:var(--text-secondary);border-radius:50%;animation:bounce 1.4s infinite ease-in-out}
+.typing-indicator span:nth-child(1){animation-delay:-.32s}
+.typing-indicator span:nth-child(2){animation-delay:-.16s}
+@keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+.attach-bar{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 8px}
+.attach-chip{background:var(--bg-secondary);border:1px solid var(--accent);border-radius:14px;padding:4px 10px;font-size:.8rem;display:flex;align-items:center;gap:6px;animation:fadeIn .3s}
+.attach-chip button{background:none;border:none;color:#f87171;cursor:pointer;font-size:.8rem}
+.input-area{padding:12px 16px 16px;background:var(--bg-glass);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.05)}
+.input-wrapper{background:var(--bg-secondary);border-radius:24px;padding:8px 14px;display:flex;align-items:flex-end;gap:8px;border:1px solid transparent;transition:.3s}
+.input-wrapper:focus-within{border-color:var(--accent);box-shadow:0 0 18px var(--accent-glow)}
+#user-input{flex:1;background:none;border:none;outline:none;color:var(--text-primary);font-size:1rem;resize:none;max-height:110px;padding:8px 0}
+.action-btn{background:none;border:none;color:var(--text-secondary);font-size:1.2rem;cursor:pointer;transition:.3s;padding:6px}
+.action-btn:hover{color:var(--accent)}
+#send-btn{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;color:#fff;font-size:1.1rem;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#send-btn:hover{transform:scale(1.08);box-shadow:0 0 20px var(--accent-glow)}
+#send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;animation:fadeIn .3s}
+.modal{background:var(--bg-secondary);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal h2{margin-bottom:10px;font-size:1.3rem}
+.modal p{color:var(--text-secondary);font-size:.9rem;margin-bottom:16px;line-height:1.6}
+.modal input{width:100%;background:var(--bg-primary);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:12px 16px;color:var(--text-primary);font-size:.95rem;outline:none;direction:ltr;text-align:left}
+.modal input:focus{border-color:var(--accent)}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.modal-btns button{flex:1;padding:12px;border-radius:14px;border:none;cursor:pointer;font-size:.95rem;font-weight:500;transition:.3s}
+#test-key-btn{background:var(--bg-primary);color:var(--text-primary);border:1px solid rgba(255,255,255,0.15)}
+#save-key-btn{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+#key-status{margin-top:12px;font-size:.88rem;min-height:20px;line-height:1.5}
+#key-status.ok{color:#4ade80}
+#key-status.err{color:#f87171}
+.modal .hint{font-size:.78rem;margin-top:14px;margin-bottom:0}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1><i class="fas fa-robot"></i> העוזר האישי שלי</h1>
+    <div class="header-actions">
+        <button id="location-btn" title="מזג אוויר לפי המיקום שלי"><i class="fas fa-location-crosshairs"></i></button>
+        <button id="clear-btn" title="שיחה חדשה"><i class="fas fa-broom"></i></button>
+        <button id="settings-btn" title="הגדרות API"><i class="fas fa-gear"></i></button>
+    </div>
+</div>
+
+<div class="chat-container" id="chat-container">
+    <div class="message ai-msg">שלום! 👋 אני העוזר האישי שלך.<br>אני מחובר לאינטרנט, מבין תמונות ומסמכים, ויכול לדווח לך על מזג האוויר. איך נתחיל?</div>
+</div>
+
+<div class="input-area">
+    <div class="attach-bar" id="attach-bar"></div>
+    <div class="input-wrapper">
+        <label for="file-input" class="action-btn" title="צרף תמונה או מסמך"><i class="fas fa-paperclip"></i></label>
+        <input type="file" id="file-input" accept="image/*,application/pdf,.txt,.md" multiple hidden>
+        <textarea id="user-input" rows="1" placeholder="כתוב הודעה..."></textarea>
+        <button id="send-btn" title="שלח"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+        <h2>⚙️ הגדרת מפתח API</h2>
+        <p>כדי שהעוזר יעבוד, צריך מפתח חינמי מ-Google Gemini.<br>
+        1. כנס ל-<b>aistudio.google.com/app/apikey</b><br>
+        2. לחץ Create API Key והעתק אותו<br>
+        3. הדבק אותו כאן למטה</p>
+        <input type="password" id="key-input" placeholder="הדבק כאן את המפתח...">
+        <div class="modal-btns">
+            <button id="test-key-btn">🔌 בדוק חיבור</button>
+            <button id="save-key-btn">💾 שמור וסגור</button>
+        </div>
+        <div id="key-status"></div>
+        <p class="hint">🔒 המפתח נשמר רק בדפדפן שלך, אף פעם לא בקוד ולא ב-GitHub.</p>
+    </div>
+</div>
+
+<script>
+let API_KEY = localStorage.getItem('gemini_api_key') || '';
+let chatHistory = [];
+let attachments = [];
+let weatherContext = '';
+
+const chatContainer = document.getElementById('chat-container');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+const fileInput = document.getElementById('file-input');
+const attachBar = document.getElementById('attach-bar');
+const locationBtn = document.getElementById('location-btn');
+const clearBtn = document.getElementById('clear-btn');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const keyInput = document.getElementById('key-input');
+const testKeyBtn = document.getElementById('test-key-btn');
+const saveKeyBtn = document.getElementById('save-key-btn');
+const keyStatus = document.getElementById('key-status');
+
+if (!API_KEY) { openSettings(); }
+
+settingsBtn.addEventListener('click', openSettings);
+function openSettings() {
+    keyInput.value = API_KEY;
+    keyStatus.textContent = '';
+    keyStatus.className = '';
+    settingsModal.style.display = 'flex';
+}
+saveKeyBtn.addEventListener('click', function() {
+    API_KEY = keyInput.value.trim();
+    if (API_KEY) { localStorage.setItem('gemini_api_key', API_KEY); }
+    settingsModal.style.display = 'none';
+});
+testKeyBtn.addEventListener('click', async function() {
+    const k = keyInput.value.trim();
+    if (!k) { keyStatus.textContent = 'הדבק קודם מפתח!'; keyStatus.className = 'err'; return; }
+    keyStatus.textContent = 'בודק חיבור...'; keyStatus.className = '';
+    try {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + k + '&pageSize=200');
+        const d = await r.json();
+        if (r.ok && d.models) {
+            const count = d.models.length;
+            keyStatus.textContent = '✅ המפתח תקין! נמצאו ' + count + ' מודלים זמינים. לחץ "שמור וסגור".';
+            keyStatus.className = 'ok';
+        } else {
+            keyStatus.textContent = '❌ המפתח לא תקין: ' + (d.error ? d.error.message : 'שגיאה לא ידועה');
+            keyStatus.className = 'err';
+        }
+    } catch (e) {
+        keyStatus.textContent = '❌ שגיאת רשת. בדוק חיבור לאינטרנט.';
+        keyStatus.className = 'err';
+    }
+});
+
+userInput.addEventListener('input', function() {
+    userInput.style.height = 'auto';
+    userInput.style.height = userInput.scrollHeight + 'px';
+});
+userInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+sendBtn.addEventListener('click', sendMessage);
+
+fileInput.addEventListener('change', function(e) {
+    Array.from(e.target.files).forEach(function(file) {
+        if (file.size > 15000000) { alert('הקובץ ' + file.name + ' גדול מדי (מקסימום 15MB)'); return; }
+        const reader = new FileReader();
+        const isInline = (file.type.indexOf('image') === 0 || file.type === 'application/pdf');
+        reader.onload = function(ev) {
+            if (isInline) {
+                attachments.push({ kind: 'inline', name: file.name, mime: file.type, data: ev.target.result.split(',')[1] });
+            } else {
+                attachments.push({ kind: 'text', name: file.name, mime: 'text/plain', data: ev.target.result });
+            }
+            renderAttachments();
+        };
+        if (isInline) { reader.readAsDataURL(file); } else { reader.readAsText(file); }
+    });
+    fileInput.value = '';
+});
+
+function renderAttachments() {
+    attachBar.innerHTML = '';
+    attachments.forEach(function(a, i) {
+        const chip = document.createElement('div');
+        chip.className = 'attach-chip';
+        chip.innerHTML = '<i class="fas fa-file"></i> ' + a.name + ' ';
+        const rm = document.createElement('button');
+        rm.innerHTML = '<i class="fas fa-times"></i>';
+        rm.addEventListener('click', function() { attachments.splice(i, 1); renderAttachments(); });
+        chip.appendChild(rm);
+        attachBar.appendChild(chip);
+    });
+}
+
+clearBtn.addEventListener('click', function() {
+    chatHistory = [];
+    attachments = [];
+    renderAttachments();
+    chatContainer.innerHTML = '';
+    addMessage('שיחה חדשה נפתחה! 🧹 על מה נדבר?', 'ai');
+});
+
+locationBtn.addEventListener('click', function() {
+    if (!navigator.geolocation) { addMessage('הדפדפן לא תומך במיקום.', 'ai'); return; }
+    addMessage('📍 מאתר את המיקום שלך...', 'ai');
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=' + pos.coords.latitude + '&longitude=' + pos.coords.longitude + '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            weatherContext = 'מזג האוויר הנוכחי במיקום המשתמש: טמפרטורה ' + d.current.temperature_2m + ' מעלות, לחות ' + d.current.relative_humidity_2m + '%, רוח ' + d.current.wind_speed_10m + ' קמ"ש.';
+            addMessage('✅ ' + weatherContext + ' עכשיו תוכל לשאול אותי על מזג האוויר!', 'ai');
+        })
+        .catch(function() { addMessage('שגיאה בקבלת מזג האוויר.', 'ai'); });
+    }, function() { addMessage('לא אישרת הרשאת מיקום. אפשר לנסות שוב מהכפתור 📍.', 'ai'); });
+});
+
+function addMessage(text, sender, filesList) {
+    const div = document.createElement('div');
+    div.className = 'message ' + (sender === 'user' ? 'user-msg' : 'ai-msg');
+    if (sender === 'ai' && window.marked) { div.innerHTML = marked.parse(text); }
+    else { div.textContent = text; }
+    if (filesList && filesList.length) {
+        const fl = document.createElement('div');
+        fl.className = 'msg-files';
+        filesList.forEach(function(f) { const s = document.createElement('span'); s.textContent = '📎 ' + f; fl.appendChild(s); });
+        div.appendChild(fl);
+    }
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return div;
+}
+function showTyping() {
+    const t = document.createElement('div');
+    t.className = 'typing-indicator'; t.id = 'typing-indicator';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    chatContainer.appendChild(t);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+function hideTyping() { const t = document.getElementById('typing-indicator'); if (t) t.remove(); }
+
+async function listModels() {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + API_KEY + '&pageSize=200');
+    const data = await res.json();
+    if (data.error) { throw new Error(data.error.message); }
+    const usable = (data.models || []).filter(function(m) {
+        return (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1;
+    }).map(function(m) { return m.name.replace('models/', ''); });
+    const picked = [];
+    ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'].forEach(function(p) {
+        usable.forEach(function(u) { if (u.indexOf(p) !== -1 && picked.indexOf(u) === -1) { picked.push(u); } });
+    });
+    usable.forEach(function(u) { if (picked.indexOf(u) === -1 && u.indexOf('flash') !== -1) { picked.push(u); } });
+    usable.forEach(function(u) { if (picked.indexOf(u) === -1) { picked.push(u); } });
+    if (picked.length === 0) { throw new Error('לא נמצאו מודלים זמינים במפתח הזה'); }
+    return picked.slice(0, 3);
+}
+
+async function callGemini(model, contents, useTools) {
+    const body = { contents: contents };
+    let sys = 'אתה עוזר אישי ידידותי, חכם וקולח. ענה תמיד בעברית, אלא אם המשתמש מבקש שפה אחרת.';
+    if (weatherContext) { sys += ' ' + weatherContext; }
+    body.systemInstruction = { parts: [{ text: sys }] };
+    if (useTools) { body.tools = [{ google_search: {} }]; }
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + API_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) { throw new Error(data.error.message); }
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        const parts = data.candidates[0].content.parts || [];
+        let txt = '';
+        parts.forEach(function(p) { if (p.text) { txt += p.text; } });
+        if (txt) { return txt; }
+    }
+    throw new Error('תגובה ריקה מהמודל');
+}
+
+async function askAI(contents) {
+    const models = await listModels();
+    let lastErr = 'לא נמצא מודל זמין';
+    for (let i = 0; i < models.length; i++) {
+        try { return await callGemini(models[i], contents, true); }
+        catch (e1) {
+            lastErr = e1.message;
+            try { return await callGemini(models[i], contents, false); }
+            catch (e2) { lastErr = e2.message; }
+        }
+    }
+    throw new Error(lastErr);
+}
+
+async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text && attachments.length === 0) return;
+    if (!API_KEY) { openSettings(); addMessage('⚙️ קודם כל - הגדר את מפתח ה-API מהחלון שנפתח.', 'ai'); return; }
+
+    const parts = [];
+    const fileNames = [];
+    attachments.forEach(function(a) {
+        fileNames.push(a.name);
+        if (a.kind === 'inline') { parts.push({ inlineData: { mimeType: a.mime, data: a.data } }); }
+        else { parts.push({ text: 'תוכן המסמך "' + a.name + '":\n' + a.data }); }
+    });
+    if (text) { parts.push({ text: text }); }
+
+    addMessage(text || '(קבצים מצורפים)', 'user', fileNames);
+    userInput.value = ''; userInput.style.height = 'auto';
+    attachments = []; renderAttachments();
+    sendBtn.disabled = true;
+    showTyping();
+
+    chatHistory.push({ role: 'user', parts: parts });
+    try {
+        const reply = await askAI(chatHistory);
+        hideTyping();
+        addMessage(reply, 'ai');
+        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+    } catch (err) {
+        hideTyping();
+        addMessage('❌ שגיאה: ' + err.message + '\nלחץ על ⚙️ למעלה והגדר מפתח תקין.', 'ai');
+        chatHistory.pop();
+    }
+    sendBtn.disabled = false;
+}
+
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+</script>
+</body>
+</html>
